@@ -1,7 +1,41 @@
 import json
 import os
+import sys
 import tempfile
+import types
 import unittest
+
+
+class _FakeRow:
+    def __init__(self, data):
+        self._data = data
+
+    def to_dict(self):
+        return dict(self._data)
+
+
+class _FakeILoc:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def __getitem__(self, index):
+        return _FakeRow(self._rows[index])
+
+
+class _FakeDataFrame:
+    def __init__(self, rows):
+        self._rows = rows
+
+    @property
+    def iloc(self):
+        return _FakeILoc(self._rows)
+
+
+sys.modules.setdefault(
+    "pandas",
+    types.SimpleNamespace(DataFrame=lambda rows: _FakeDataFrame(rows)),
+)
+sys.modules.setdefault("joblib", types.SimpleNamespace())
 
 from predict import json_to_features
 
